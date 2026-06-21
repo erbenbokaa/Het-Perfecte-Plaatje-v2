@@ -22,7 +22,7 @@ export default async function VotePage() {
   if (settings.phase !== "voting") {
     return (
       <div className="card text-center">
-        <h1 className="text-xl font-bold mb-2">🗳️ Stemmen</h1>
+        <h1 className="text-xl font-bold mb-2">Stemmen</h1>
         <p className="text-stone-600">
           Stemmen is op dit moment niet open. Status:{" "}
           <span className="font-medium">{settings.phase}</span>.
@@ -34,11 +34,11 @@ export default async function VotePage() {
   return (
     <div className="space-y-6">
       <div className="card">
-        <h1 className="text-xl font-bold mb-1">🗳️ Stemmen</h1>
+        <h1 className="text-xl font-bold mb-1">Stemmen</h1>
         <p className="text-sm text-stone-600">
-          Kies per categorie je top 3: 🥇 = 3 punten, 🥈 = 2 punten, 🥉 = 1 punt.
-          Je stemt anoniem en je eigen foto's zie je hier niet. Je kunt je keuze
-          aanpassen zolang het stemmen open is.
+          Kies per categorie je top 3. Je 1e plek krijgt 3 punten, je 2e 2 punten
+          en je 3e 1 punt. Je stemt anoniem en je eigen foto's zie je hier niet.
+          Je kunt je keuze aanpassen zolang het stemmen open is.
         </p>
       </div>
 

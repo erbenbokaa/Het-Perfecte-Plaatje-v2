@@ -8,10 +8,11 @@ import {
 } from "@/lib/db";
 import { photoPublicUrl } from "@/lib/supabase";
 import { computeCategoryResults, computeLeaderboard } from "@/lib/scoring";
+import RankBadge from "@/components/RankBadge";
+import { TrophyIllustration } from "@/components/illustrations";
 
 export const dynamic = "force-dynamic";
 
-const MEDAL = ["🥇", "🥈", "🥉"];
 
 export default async function ResultsPage() {
   const user = await requireUser();
@@ -49,7 +50,10 @@ export default async function ResultsPage() {
       )}
 
       <div className="card">
-        <h1 className="text-2xl font-bold mb-4">🏆 Totaalklassement</h1>
+        <h1 className="mb-4 flex items-center gap-2 text-2xl font-bold">
+          <TrophyIllustration className="h-8 w-8" />
+          Totaalklassement
+        </h1>
         <ol className="space-y-2">
           {leaderboard.map((entry, i) => (
             <li
@@ -60,7 +64,13 @@ export default async function ResultsPage() {
               }
             >
               <span className="flex items-center gap-3">
-                <span className="w-6 text-center text-lg">{MEDAL[i] ?? i + 1}</span>
+                {i < 3 ? (
+                  <RankBadge rank={i + 1} />
+                ) : (
+                  <span className="flex h-7 w-7 items-center justify-center text-sm font-semibold text-stone-400">
+                    {i + 1}
+                  </span>
+                )}
                 <span className="font-medium">{entry.participantName}</span>
                 {entry.categoryWins > 0 && (
                   <span className="text-xs text-stone-500">
@@ -99,11 +109,12 @@ export default async function ResultsPage() {
                     className="w-full h-36 object-cover"
                   />
                   <div className="p-2 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">
-                        {MEDAL[i] ?? `#${i + 1}`} {r.participantName}
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="flex min-w-0 items-center gap-1.5 font-medium">
+                        {i < 3 && <RankBadge rank={i + 1} className="h-5 w-5 text-[11px]" />}
+                        <span className="truncate">{r.participantName}</span>
                       </span>
-                      <span className="font-bold text-ocean">{r.points} pt</span>
+                      <span className="shrink-0 font-bold text-ocean">{r.points} pt</span>
                     </div>
                     {r.photo.caption && (
                       <div className="text-stone-500 italic truncate">{r.photo.caption}</div>

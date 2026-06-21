@@ -10,7 +10,12 @@ export interface VotePhoto {
   caption: string;
 }
 
-const RANK_LABEL: Record<number, string> = { 1: "🥇 1e", 2: "🥈 2e", 3: "🥉 3e" };
+const RANK_LABEL: Record<number, string> = { 1: "1e", 2: "2e", 3: "3e" };
+const RANK_COLOR: Record<number, string> = {
+  1: "bg-gradient-to-br from-yellow-300 to-amber-500 text-white",
+  2: "bg-gradient-to-br from-slate-300 to-slate-500 text-white",
+  3: "bg-gradient-to-br from-orange-300 to-amber-700 text-white",
+};
 
 export default function VoteCategory({
   categoryId,
@@ -114,9 +119,9 @@ export default function VoteCategory({
                         type="button"
                         onClick={() => setRank(p.id, rank)}
                         className={
-                          "flex-1 py-1.5 text-xs font-medium border-t border-stone-200 transition " +
+                          "flex-1 border-t border-stone-200 py-2 text-xs font-semibold transition " +
                           (r === rank
-                            ? "bg-sunset text-white"
+                            ? RANK_COLOR[rank]
                             : "bg-white text-stone-600 hover:bg-stone-50")
                         }
                       >
