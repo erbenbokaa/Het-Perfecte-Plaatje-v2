@@ -2,14 +2,13 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { getSettings, getCategories, getPhotosByParticipant } from "@/lib/db";
 import { currentDayNumber } from "@/lib/competition";
+import { CogIcon, LockIcon } from "@/components/icons";
 import {
-  CameraIcon,
-  GalleryIcon,
-  StarIcon,
-  TrophyIcon,
-  CogIcon,
-  LockIcon,
-} from "@/components/icons";
+  CameraIllustration,
+  GalleryIllustration,
+  StarIllustration,
+  TrophyIllustration,
+} from "@/components/illustrations";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +20,6 @@ export default async function DashboardPage() {
     getPhotosByParticipant(user.id),
   ]);
 
-  const started = Boolean(settings.start_date);
   const currentDay = currentDayNumber(settings.start_date, settings.num_days);
   const daysToGo = Math.max(settings.num_days - currentDay, 0);
   const progress = settings.num_days > 0 ? (currentDay / settings.num_days) * 100 : 0;
@@ -31,72 +29,49 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-5">
-      {/* Bovenkant */}
-      <div className="card">
-        <p className="text-sm font-medium text-stone-500">Hoi {user.name}!</p>
-
+      {/* Compacte bovenkant */}
+      <div className="card !p-4">
         {showDayCounter ? (
           <>
-            <div className="mt-1 flex items-end gap-2">
-              <span className="text-5xl font-extrabold tracking-tight text-stone-800">
+            <div className="flex items-center justify-between">
+              <p className="text-xl font-extrabold tracking-tight text-stone-800">
                 Dag {currentDay}
-              </span>
-              <span className="mb-1.5 text-lg font-medium text-stone-400">
-                / {settings.num_days}
+                <span className="ml-1 text-sm font-medium text-stone-400">
+                  / {settings.num_days}
+                </span>
+              </p>
+              <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-600">
+                {daysToGo > 0 ? `nog ${daysToGo} ${daysToGo === 1 ? "dag" : "dagen"}` : "laatste dag"}
               </span>
             </div>
-            <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-white/70">
+            <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-white/70">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-orange-400 to-rose-400"
                 style={{ width: `${Math.max(progress, 6)}%` }}
               />
             </div>
-            <p className="mt-2 text-sm text-stone-500">
-              {daysToGo > 0
-                ? `Nog ${daysToGo} ${daysToGo === 1 ? "dag" : "dagen"} te gaan`
-                : "Dit is de laatste dag!"}
-            </p>
-            {user.is_admin && !started && (
-              <p className="mt-1 text-xs text-stone-400">
-                Tip: stel de startdatum in bij Beheer om de dagen te laten tellen.
-              </p>
-            )}
           </>
-        ) : settings.phase === "results" ? (
-          <p className="mt-2 text-stone-600">
-            De wedstrijd is afgelopen — bekijk de uitslag!
-          </p>
         ) : (
-          <p className="mt-2 text-stone-600">
-            Welkom! De voorbereidingen zijn nog bezig.
+          <p className="font-semibold text-stone-700">
+            {settings.phase === "results"
+              ? "De uitslag is bekend!"
+              : `Hoi ${user.name}!`}
           </p>
-        )}
-
-        {categories.length > 0 && settings.phase === "upload" && (
-          <div className="mt-4 flex items-center gap-3 rounded-2xl bg-white/60 px-4 py-3">
-            <div className="flex-1">
-              <p className="text-sm font-medium text-stone-600">Jouw inzendingen</p>
-              <p className="text-xs text-stone-400">
-                {doneCats}/{categories.length} categorieën klaar
-              </p>
-            </div>
-            <span className="text-lg font-bold text-orange-500">
-              {doneCats}/{categories.length}
-            </span>
-          </div>
         )}
       </div>
 
-      {/* Tegels */}
+      {/* Tegels met 3D-illustraties */}
       <div className="grid grid-cols-2 gap-4">
         <Tile
           href="/upload"
           label="Uploaden"
-          sub="Lever je foto in"
-          Icon={CameraIcon}
+          sub={
+            settings.phase === "upload"
+              ? `${doneCats}/${categories.length} categorieën klaar`
+              : "Lever je foto in"
+          }
+          Illu={CameraIllustration}
           tile="from-orange-50 to-rose-50"
-          badge="from-orange-400 to-rose-400"
-          glow="shadow-rose-300/60"
           active={settings.phase === "upload"}
           lockedSub="Nu niet open"
         />
@@ -104,10 +79,8 @@ export default async function DashboardPage() {
           href="/gallery"
           label="Galerij"
           sub="Bekijk alle foto's"
-          Icon={GalleryIcon}
+          Illu={GalleryIllustration}
           tile="from-sky-50 to-cyan-50"
-          badge="from-sky-400 to-cyan-500"
-          glow="shadow-cyan-300/60"
           active={settings.phase !== "setup"}
           lockedSub="Binnenkort"
         />
@@ -115,10 +88,8 @@ export default async function DashboardPage() {
           href="/vote"
           label="Stemmen"
           sub="Kies je top 3"
-          Icon={StarIcon}
+          Illu={StarIllustration}
           tile="from-violet-50 to-fuchsia-50"
-          badge="from-violet-400 to-fuchsia-500"
-          glow="shadow-fuchsia-300/60"
           active={settings.phase === "voting"}
           lockedSub="Nog niet open"
         />
@@ -126,10 +97,8 @@ export default async function DashboardPage() {
           href="/results"
           label="Uitslag"
           sub="Wie wint?"
-          Icon={TrophyIcon}
+          Illu={TrophyIllustration}
           tile="from-amber-50 to-orange-50"
-          badge="from-amber-400 to-orange-500"
-          glow="shadow-amber-300/60"
           active={settings.phase === "results"}
           lockedSub="Volgt later"
         />
@@ -155,29 +124,30 @@ function Tile({
   href,
   label,
   sub,
-  Icon,
+  Illu,
   tile,
-  badge,
-  glow,
   active,
   lockedSub,
 }: {
   href: string;
   label: string;
   sub: string;
-  Icon: (p: { className?: string }) => JSX.Element;
+  Illu: (p: { className?: string }) => JSX.Element;
   tile: string;
-  badge: string;
-  glow: string;
   active: boolean;
   lockedSub: string;
 }) {
   if (!active) {
     return (
-      <div className="rounded-[28px] border border-white/60 bg-white/45 p-5 opacity-80">
-        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-stone-300 text-white">
-          <LockIcon className="h-6 w-6" />
-        </span>
+      <div className="rounded-[28px] border border-white/60 bg-white/45 p-5 opacity-90">
+        <div className="relative h-16 w-16">
+          <div className="opacity-30 grayscale">
+            <Illu className="h-16 w-16" />
+          </div>
+          <span className="absolute -right-1 -top-1 flex h-7 w-7 items-center justify-center rounded-full bg-stone-300 text-white">
+            <LockIcon className="h-4 w-4" />
+          </span>
+        </div>
         <div className="mt-3">
           <p className="font-bold text-stone-400">{label}</p>
           <p className="text-xs text-stone-400">{lockedSub}</p>
@@ -194,16 +164,7 @@ function Tile({
         tile
       }
     >
-      <span
-        className={
-          "flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-lg " +
-          badge +
-          " " +
-          glow
-        }
-      >
-        <Icon className="h-7 w-7" />
-      </span>
+      <Illu className="h-16 w-16 drop-shadow-sm" />
       <div className="mt-3">
         <p className="font-bold text-stone-800">{label}</p>
         <p className="text-xs text-stone-500">{sub}</p>
