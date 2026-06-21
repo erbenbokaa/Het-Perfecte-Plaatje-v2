@@ -5,6 +5,7 @@ import { getSession } from "@/lib/session";
 import { getSettings } from "@/lib/db";
 import LogoutButton from "@/components/LogoutButton";
 import BottomNav from "@/components/BottomNav";
+import { CameraIcon } from "@/components/icons";
 
 export const metadata: Metadata = {
   title: "Het Perfecte Plaatje",
@@ -20,7 +21,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#eef0f3",
+  themeColor: "#fdeede",
 };
 
 export default async function RootLayout({
@@ -45,7 +46,9 @@ export default async function RootLayout({
               href={user ? "/dashboard" : "/"}
               className="flex min-w-0 items-center gap-2"
             >
-              <span className="text-xl">📸</span>
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange-400 to-rose-400 text-white">
+                <CameraIcon className="h-5 w-5" />
+              </span>
               <span className="truncate font-semibold text-stone-800">
                 {competitionName}
               </span>

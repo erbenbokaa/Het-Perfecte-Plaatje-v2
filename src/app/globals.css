@@ -5,9 +5,6 @@
 :root {
   --safe-top: env(safe-area-inset-top);
   --safe-bottom: env(safe-area-inset-bottom);
-  --bg: #eef0f3;
-  --surface: #ffffff;
-  --accent: #0f766e;
 }
 
 html {
@@ -19,9 +16,16 @@ body {
     "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  color: #18181b;
-  background-color: var(--bg);
+  color: #3a3030;
   min-height: 100dvh;
+  background: linear-gradient(
+    178deg,
+    #fdeede 0%,
+    #fdf4ea 38%,
+    #eef0e2 70%,
+    #d8e9df 100%
+  );
+  background-attachment: fixed;
 }
 
 /* iOS: voorkom inzoomen bij focus door min. 16px invoer. */
@@ -37,7 +41,7 @@ textarea {
   top: 0;
   z-index: 40;
   padding-top: var(--safe-top);
-  background: rgba(238, 240, 243, 0.72);
+  background: rgba(253, 241, 226, 0.6);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
 }
@@ -49,26 +53,27 @@ textarea {
   bottom: 0;
   z-index: 40;
   padding-bottom: var(--safe-bottom);
-  background: rgba(255, 255, 255, 0.78);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: saturate(180%) blur(22px);
+  -webkit-backdrop-filter: saturate(180%) blur(22px);
+  border-top: 1px solid rgba(255, 255, 255, 0.6);
 }
 
 /* ---------------------------------------------------------------- Buttons */
 .btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3.5 font-semibold transition active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed;
+  @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 font-semibold transition active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed;
   -webkit-tap-highlight-color: transparent;
 }
 .btn-primary {
   @apply btn text-white;
-  background-color: var(--accent);
+  background-image: linear-gradient(135deg, #fb923c, #f9647d);
+  box-shadow: 0 8px 20px -8px rgba(249, 100, 125, 0.6);
 }
 .btn-primary:hover {
-  background-color: #0c5e58;
+  background-image: linear-gradient(135deg, #f97316, #f4476a);
 }
 .btn-secondary {
-  @apply btn bg-white text-stone-800 border border-stone-200/80 hover:bg-stone-50;
+  @apply btn bg-white/70 text-stone-700 hover:bg-white;
 }
 .btn-danger {
   @apply btn bg-red-50 text-red-600 hover:bg-red-100;
@@ -76,13 +81,17 @@ textarea {
 
 /* ---------------------------------------------------------------- Cards */
 .card {
-  @apply rounded-3xl bg-white p-6;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.03);
+  @apply rounded-[28px] p-6;
+  background: rgba(255, 255, 255, 0.68);
+  backdrop-filter: saturate(150%) blur(16px);
+  -webkit-backdrop-filter: saturate(150%) blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 10px 30px -18px rgba(80, 60, 40, 0.35);
 }
 
 /* ---------------------------------------------------------------- Forms */
 .input {
-  @apply w-full rounded-2xl border-0 bg-stone-100 px-4 py-3.5 text-stone-900 outline-none transition focus:bg-white focus:ring-2 focus:ring-ocean/30;
+  @apply w-full rounded-2xl border-0 bg-white/70 px-4 py-3.5 text-stone-900 outline-none transition focus:bg-white focus:ring-2 focus:ring-orange-300/50;
 }
 .label {
   @apply block text-sm font-medium text-stone-500 mb-2;

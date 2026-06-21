@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getParticipants } from "@/lib/db";
 import { loginAction, setupAdminAction } from "@/app/actions/auth";
+import { CameraIcon } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -42,8 +43,13 @@ export default async function HomePage({
   return (
     <div className="max-w-md mx-auto">
       <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold text-ocean">📸 Het Perfecte Plaatje</h1>
-        <p className="text-stone-600 mt-1">De familie fotowedstrijd</p>
+        <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-orange-400 to-rose-400 text-white shadow-lg">
+          <CameraIcon className="h-9 w-9" />
+        </div>
+        <h1 className="text-3xl font-bold tracking-tight text-stone-800">
+          Het Perfecte Plaatje
+        </h1>
+        <p className="text-stone-500 mt-1">De familie fotowedstrijd</p>
       </div>
 
       {error && (

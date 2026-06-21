@@ -32,8 +32,20 @@ export async function uploadPhotoAction(formData: FormData) {
     return { ok: false, error: "Onbekende categorie." };
   }
 
-  // Eén inzending per categorie: definitief, niet te wijzigen.
+  // Dag wordt automatisch bepaald op basis van de startdatum (wisselt om middernacht).
+  const dayNumber = currentDayNumber(settings.start_date, settings.num_days);
+
   const mine = await getPhotosByParticipant(user.id);
+
+  // Maximaal één foto per dag.
+  if (mine.some((p) => p.day_number === dayNumber)) {
+    return {
+      ok: false,
+      error: "Je hebt vandaag al een foto ingeleverd. Kom morgen terug voor de volgende dag!",
+    };
+  }
+
+  // Elke categorie maar één keer, en definitief.
   if (mine.some((p) => p.category_id === categoryId)) {
     return {
       ok: false,
@@ -46,9 +58,6 @@ export async function uploadPhotoAction(formData: FormData) {
   if (!ALLOWED.includes(file.type)) {
     return { ok: false, error: "Alleen JPG, PNG, WEBP of HEIC." };
   }
-
-  // Dag wordt automatisch bepaald op basis van de startdatum.
-  const dayNumber = currentDayNumber(settings.start_date, settings.num_days);
 
   const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
   // Willekeurige bestandsnaam zodat de URL de inzender niet verraadt.

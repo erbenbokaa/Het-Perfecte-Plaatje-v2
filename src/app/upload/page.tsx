@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { getSettings, getCategories, getPhotosByParticipant } from "@/lib/db";
 import { photoPublicUrl } from "@/lib/supabase";
 import { currentDayNumber } from "@/lib/competition";
+import { CheckIcon } from "@/components/icons";
 import UploadForm from "@/components/UploadForm";
 
 export const dynamic = "force-dynamic";
@@ -18,27 +19,53 @@ export default async function UploadPage() {
   if (settings.phase !== "upload") {
     return (
       <div className="card text-center">
-        <h1 className="text-xl font-bold mb-2">📤 Uploaden</h1>
-        <p className="text-stone-600">
-          Uploaden is op dit moment niet open.
-        </p>
+        <h1 className="mb-2 text-xl font-bold">Uploaden</h1>
+        <p className="text-stone-600">Uploaden is op dit moment niet open.</p>
       </div>
     );
   }
 
-  const dayByCategory = new Map(myPhotos.map((p) => [p.category_id, p]));
-  const remaining = categories.filter((c) => !dayByCategory.has(c.id));
-  const doneCount = categories.length - remaining.length;
+  const photoByCategory = new Map(myPhotos.map((p) => [p.category_id, p]));
+  const remaining = categories.filter((c) => !photoByCategory.has(c.id));
+  const done = categories.filter((c) => photoByCategory.has(c.id));
+  // Nog te doen bovenaan, al gedaan onderaan.
+  const orderedCategories = [...remaining, ...done];
+  const doneCount = done.length;
   const currentDay = currentDayNumber(settings.start_date, settings.num_days);
+  const uploadedToday = myPhotos.some((p) => p.day_number === currentDay);
   const catName = (id: string) => categories.find((c) => c.id === id)?.name ?? "?";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      {/* Uploadformulier of dagstatus */}
+      {categories.length > 0 && (
+        <div className="card">
+          <h1 className="mb-1 text-xl font-bold">Foto inleveren</h1>
+          {remaining.length === 0 ? (
+            <div className="rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">
+              Je hebt voor elke categorie een foto ingeleverd. Helemaal klaar! 🎉
+            </div>
+          ) : uploadedToday ? (
+            <div className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              Je hebt vandaag (dag {currentDay}) al een foto ingeleverd. Morgen
+              mag je er weer één kiezen!
+            </div>
+          ) : (
+            <>
+              <p className="mb-4 text-sm text-stone-600">
+                Eén foto per dag. Kies een categorie die je nog moet doen.
+              </p>
+              <UploadForm remainingCategories={remaining} currentDay={currentDay} />
+            </>
+          )}
+        </div>
+      )}
+
       {/* Checklist */}
       <div className="card">
         <div className="mb-3 flex items-center justify-between">
-          <h1 className="text-xl font-bold">Mijn categorieën</h1>
-          <span className="rounded-full bg-ocean/10 px-3 py-1 text-sm font-semibold text-ocean">
+          <h2 className="text-lg font-bold">Mijn categorieën</h2>
+          <span className="rounded-full bg-orange-100 px-3 py-1 text-sm font-semibold text-orange-600">
             {doneCount}/{categories.length} klaar
           </span>
         </div>
@@ -48,35 +75,37 @@ export default async function UploadPage() {
           </p>
         ) : (
           <ul className="space-y-2">
-            {categories.map((c) => {
-              const photo = dayByCategory.get(c.id);
-              const done = Boolean(photo);
+            {orderedCategories.map((c) => {
+              const photo = photoByCategory.get(c.id);
+              const isDone = Boolean(photo);
               return (
                 <li
                   key={c.id}
                   className={
-                    "flex items-center gap-3 rounded-xl px-3 py-2.5 " +
-                    (done ? "bg-green-50" : "bg-stone-50")
+                    "flex items-start gap-3 rounded-2xl px-3 py-3 " +
+                    (isDone ? "bg-green-50/70" : "bg-white/60")
                   }
                 >
                   <span
                     className={
-                      "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-sm " +
-                      (done ? "bg-green-500 text-white" : "border-2 border-stone-300 text-transparent")
+                      "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full " +
+                      (isDone
+                        ? "bg-green-500 text-white"
+                        : "border-2 border-stone-300")
                     }
                   >
-                    ✓
+                    {isDone && <CheckIcon className="h-4 w-4" />}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className={"font-medium " + (done ? "text-stone-700" : "text-stone-800")}>
-                      {c.name}
-                    </span>
+                    <span className="font-medium text-stone-800">{c.name}</span>
                     {c.description && (
-                      <span className="block truncate text-xs text-stone-400">{c.description}</span>
+                      <span className="block text-xs text-stone-400">
+                        {c.description}
+                      </span>
                     )}
                   </span>
-                  {done && (
-                    <span className="shrink-0 text-xs text-green-600">
+                  {isDone && (
+                    <span className="shrink-0 whitespace-nowrap text-xs font-medium text-green-600">
                       dag {photo!.day_number}
                     </span>
                   )}
@@ -87,34 +116,13 @@ export default async function UploadPage() {
         )}
       </div>
 
-      {/* Uploadformulier */}
-      {categories.length > 0 && (
+      {/* Mijn inzendingen */}
+      {myPhotos.length > 0 && (
         <div className="card">
-          <h2 className="mb-1 text-lg font-semibold">📤 Foto inleveren</h2>
-          {remaining.length === 0 ? (
-            <div className="rounded-xl bg-green-50 px-4 py-3 text-sm text-green-700">
-              🎉 Je hebt voor elke categorie een foto ingeleverd. Helemaal klaar!
-            </div>
-          ) : (
-            <>
-              <p className="mb-4 text-sm text-stone-600">
-                Kies een categorie die je nog moet doen en lever je foto in.
-              </p>
-              <UploadForm remainingCategories={remaining} currentDay={currentDay} />
-            </>
-          )}
-        </div>
-      )}
-
-      {/* Mijn inzendingen (definitief) */}
-      <div className="card">
-        <h2 className="mb-3 font-semibold">Mijn inzendingen ({myPhotos.length})</h2>
-        {myPhotos.length === 0 ? (
-          <p className="text-sm text-stone-500">Nog niets ingeleverd.</p>
-        ) : (
+          <h2 className="mb-3 font-bold">Mijn inzendingen ({myPhotos.length})</h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {myPhotos.map((p) => (
-              <div key={p.id} className="overflow-hidden rounded-xl border border-stone-200 bg-stone-50">
+              <div key={p.id} className="overflow-hidden rounded-2xl bg-white/60">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={photoPublicUrl(p.storage_path)}
@@ -123,18 +131,16 @@ export default async function UploadPage() {
                 />
                 <div className="p-2 text-xs">
                   <div className="font-medium">{catName(p.category_id)}</div>
-                  <div className="text-stone-500">Dag {p.day_number}</div>
+                  <div className="text-stone-400">Dag {p.day_number}</div>
                 </div>
               </div>
             ))}
           </div>
-        )}
-        {myPhotos.length > 0 && (
           <Link href="/gallery" className="btn-secondary mt-4 w-full">
-            Bekijk alle ingeleverde foto's →
+            Bekijk alle ingeleverde foto's
           </Link>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

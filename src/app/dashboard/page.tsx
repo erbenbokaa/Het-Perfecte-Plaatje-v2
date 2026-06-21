@@ -1,131 +1,188 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
+import { getSettings, getCategories, getPhotosByParticipant } from "@/lib/db";
+import { currentDayNumber } from "@/lib/competition";
 import {
-  getSettings,
-  getCategories,
-  getPhotosByParticipant,
-  getParticipants,
-  getVotesByVoter,
-} from "@/lib/db";
-import type { Phase } from "@/lib/types";
+  CameraIcon,
+  GalleryIcon,
+  StarIcon,
+  TrophyIcon,
+  CogIcon,
+  LockIcon,
+} from "@/components/icons";
 
 export const dynamic = "force-dynamic";
 
-const PHASE_LABEL: Record<Phase, string> = {
-  setup: "Voorbereiden",
-  upload: "Foto's uploaden",
-  voting: "Stemmen",
-  results: "Uitslag bekend",
-};
-
 export default async function DashboardPage() {
   const user = await requireUser();
-  const [settings, categories, myPhotos, participants, myVotes] =
-    await Promise.all([
-      getSettings(),
-      getCategories(),
-      getPhotosByParticipant(user.id),
-      getParticipants(),
-      getVotesByVoter(user.id),
-    ]);
+  const [settings, categories, myPhotos] = await Promise.all([
+    getSettings(),
+    getCategories(),
+    getPhotosByParticipant(user.id),
+  ]);
 
-  const votedCategories = new Set(myVotes.map((v) => v.category_id));
+  const started = Boolean(settings.start_date);
+  const currentDay = currentDayNumber(settings.start_date, settings.num_days);
+  const daysToGo = Math.max(settings.num_days - currentDay, 0);
+  const progress = settings.num_days > 0 ? (currentDay / settings.num_days) * 100 : 0;
+  const doneCats = new Set(myPhotos.map((p) => p.category_id)).size;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      {/* Dag-aftellen */}
       <div className="card">
-        <h1 className="text-2xl font-bold tracking-tight">Hoi {user.name}! 👋</h1>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-ocean/10 px-3 py-1 text-sm font-semibold text-ocean">
-            <span className="h-1.5 w-1.5 rounded-full bg-ocean" />
-            {PHASE_LABEL[settings.phase]}
-          </span>
-          <span className="rounded-full bg-stone-100 px-3 py-1 text-sm text-stone-500">
-            {participants.length} deelnemers
-          </span>
-          <span className="rounded-full bg-stone-100 px-3 py-1 text-sm text-stone-500">
-            {categories.length} categorieën · {settings.num_days} dagen
-          </span>
-        </div>
+        <p className="text-sm font-medium text-stone-500">Hoi {user.name}!</p>
+
+        {started && settings.phase !== "setup" ? (
+          <>
+            <div className="mt-1 flex items-end gap-2">
+              <span className="text-5xl font-extrabold tracking-tight text-stone-800">
+                Dag {currentDay}
+              </span>
+              <span className="mb-1.5 text-lg font-medium text-stone-400">
+                / {settings.num_days}
+              </span>
+            </div>
+            <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-white/70">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-orange-400 to-rose-400"
+                style={{ width: `${Math.max(progress, 6)}%` }}
+              />
+            </div>
+            <p className="mt-2 text-sm text-stone-500">
+              {daysToGo > 0
+                ? `Nog ${daysToGo} ${daysToGo === 1 ? "dag" : "dagen"} te gaan`
+                : "Dit is de laatste dag!"}
+            </p>
+          </>
+        ) : (
+          <p className="mt-2 text-stone-600">
+            {settings.phase === "results"
+              ? "De wedstrijd is afgelopen — bekijk de uitslag!"
+              : "De wedstrijd is nog niet begonnen."}
+            {user.is_admin && !started && (
+              <span className="mt-1 block text-sm text-stone-400">
+                Stel de startdatum in bij Beheer om de dagen te laten tellen.
+              </span>
+            )}
+          </p>
+        )}
+
+        {categories.length > 0 && settings.phase === "upload" && (
+          <div className="mt-4 flex items-center gap-3 rounded-2xl bg-white/60 px-4 py-3">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-stone-600">
+                Jouw inzendingen
+              </p>
+              <p className="text-xs text-stone-400">
+                {doneCats}/{categories.length} categorieën klaar
+              </p>
+            </div>
+            <span className="text-lg font-bold text-orange-500">
+              {doneCats}/{categories.length}
+            </span>
+          </div>
+        )}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <DashboardCard
-          title="📤 Uploaden"
-          active={settings.phase === "upload"}
+      {/* Tegels */}
+      <div className="grid grid-cols-2 gap-4">
+        <Tile
           href="/upload"
-          stat={`${new Set(myPhotos.map((p) => p.category_id)).size}/${categories.length} categorieën klaar`}
-          disabledText="Uploaden is nu niet open"
+          label="Uploaden"
+          sub="Lever je foto in"
+          Icon={CameraIcon}
+          gradient="from-orange-400 to-rose-400"
+          active={settings.phase === "upload"}
+          lockedSub="Nu niet open"
         />
-        <DashboardCard
-          title="🗳️ Stemmen"
-          active={settings.phase === "voting"}
+        <Tile
+          href="/gallery"
+          label="Galerij"
+          sub="Bekijk alle foto's"
+          Icon={GalleryIcon}
+          gradient="from-sky-400 to-cyan-500"
+          active={settings.phase !== "setup"}
+          lockedSub="Binnenkort"
+        />
+        <Tile
           href="/vote"
-          stat={`${votedCategories.size}/${categories.length} categorieën gestemd`}
-          disabledText="Stemmen is nog niet open"
+          label="Stemmen"
+          sub="Kies je top 3"
+          Icon={StarIcon}
+          gradient="from-violet-400 to-fuchsia-500"
+          active={settings.phase === "voting"}
+          lockedSub="Nog niet open"
         />
-        <DashboardCard
-          title="🏆 Uitslag"
-          active={settings.phase === "results"}
+        <Tile
           href="/results"
-          stat="Bekijk wie gewonnen heeft"
-          disabledText="Uitslag volgt later"
+          label="Uitslag"
+          sub="Wie wint?"
+          Icon={TrophyIcon}
+          gradient="from-amber-400 to-orange-500"
+          active={settings.phase === "results"}
+          lockedSub="Volgt later"
         />
       </div>
-
-      {categories.length > 0 && (
-        <div className="card">
-          <h2 className="font-semibold mb-3">Categorieën dit jaar</h2>
-          <ul className="grid gap-2 sm:grid-cols-2">
-            {categories.map((c) => (
-              <li key={c.id} className="rounded-lg bg-stone-50 px-3 py-2 text-sm">
-                <span className="font-medium">{c.name}</span>
-                {c.description && (
-                  <span className="text-stone-500"> — {c.description}</span>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
 
       {user.is_admin && (
-        <div className="text-center">
-          <Link href="/admin" className="btn-secondary">
-            ⚙️ Naar beheer
-          </Link>
-        </div>
+        <Link
+          href="/admin"
+          className="flex items-center gap-3 rounded-[28px] bg-white/60 px-5 py-4 text-stone-600 transition hover:bg-white/80"
+        >
+          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-400 to-slate-600 text-white">
+            <CogIcon className="h-5 w-5" />
+          </span>
+          <span className="font-semibold">Beheer</span>
+          <span className="ml-auto text-stone-300">›</span>
+        </Link>
       )}
     </div>
   );
 }
 
-function DashboardCard({
-  title,
-  active,
+function Tile({
   href,
-  stat,
-  disabledText,
+  label,
+  sub,
+  Icon,
+  gradient,
+  active,
+  lockedSub,
 }: {
-  title: string;
-  active: boolean;
   href: string;
-  stat: string;
-  disabledText: string;
+  label: string;
+  sub: string;
+  Icon: (p: { className?: string }) => JSX.Element;
+  gradient: string;
+  active: boolean;
+  lockedSub: string;
 }) {
-  if (active) {
-    return (
-      <Link href={href} className="card hover:shadow-md transition block">
-        <h3 className="font-semibold mb-1">{title}</h3>
-        <p className="text-sm text-stone-600">{stat}</p>
-        <p className="mt-2 text-xs font-medium text-ocean">Nu open →</p>
-      </Link>
-    );
+  const inner = (
+    <>
+      <span
+        className={
+          "flex h-12 w-12 items-center justify-center rounded-2xl text-white " +
+          (active ? `bg-gradient-to-br ${gradient}` : "bg-stone-300")
+        }
+      >
+        {active ? <Icon className="h-6 w-6" /> : <LockIcon className="h-5 w-5" />}
+      </span>
+      <div className="mt-3">
+        <p className={"font-bold " + (active ? "text-stone-800" : "text-stone-400")}>
+          {label}
+        </p>
+        <p className="text-xs text-stone-400">{active ? sub : lockedSub}</p>
+      </div>
+    </>
+  );
+
+  if (!active) {
+    return <div className="card !p-5 opacity-70">{inner}</div>;
   }
   return (
-    <div className="card opacity-60">
-      <h3 className="font-semibold mb-1">{title}</h3>
-      <p className="text-sm text-stone-500">{disabledText}</p>
-    </div>
+    <Link href={href} className="card !p-5 transition active:scale-[0.98]">
+      {inner}
+    </Link>
   );
 }

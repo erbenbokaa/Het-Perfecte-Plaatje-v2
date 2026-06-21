@@ -22,7 +22,7 @@ export default async function GalleryPage() {
   if (settings.phase === "setup") {
     return (
       <div className="card text-center">
-        <h1 className="text-xl font-bold mb-2">🖼️ Galerij</h1>
+        <h1 className="mb-2 text-xl font-bold">Galerij</h1>
         <p className="text-stone-600">De wedstrijd is nog niet begonnen.</p>
       </div>
     );
@@ -32,9 +32,10 @@ export default async function GalleryPage() {
   if (settings.phase === "upload" && myPhotos.length === 0) {
     return (
       <div className="card text-center">
-        <h1 className="text-xl font-bold mb-2">🖼️ Galerij</h1>
-        <p className="text-stone-600 mb-4">
-          Lever eerst zelf een foto in om alle ingeleverde foto's te kunnen bekijken.
+        <h1 className="mb-2 text-xl font-bold">Galerij</h1>
+        <p className="mb-4 text-stone-600">
+          Lever eerst zelf een foto in om alle ingeleverde foto's te kunnen
+          bekijken.
         </p>
         <Link href="/upload" className="btn-primary">
           Naar uploaden
@@ -43,55 +44,53 @@ export default async function GalleryPage() {
     );
   }
 
-  const catName = (id: string) => categories.find((c) => c.id === id)?.name ?? "?";
-
-  // Groepeer per dag (oplopend).
-  const days = Array.from(new Set(allPhotos.map((p) => p.day_number))).sort(
-    (a, b) => a - b
-  );
+  // Alleen categorieën met inzendingen, in de ingestelde volgorde.
+  const withPhotos = categories
+    .map((c) => ({
+      category: c,
+      photos: allPhotos.filter((p) => p.category_id === c.id),
+    }))
+    .filter((g) => g.photos.length > 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="card">
-        <h1 className="text-xl font-bold">🖼️ Galerij</h1>
+        <h1 className="text-xl font-bold">Galerij</h1>
         <p className="text-sm text-stone-600">
-          Alle ingeleverde foto's tot nu toe ({allPhotos.length}). Wie welke foto
-          heeft gemaakt blijft geheim — dat hoor je pas bij de uitslag. 🤫
+          Alle ingeleverde foto's ({allPhotos.length}), per categorie. Wie welke
+          foto maakte blijft geheim tot de uitslag. 🤫
         </p>
       </div>
 
-      {allPhotos.length === 0 && (
+      {withPhotos.length === 0 && (
         <div className="card text-sm text-stone-500">
           Er zijn nog geen foto's ingeleverd.
         </div>
       )}
 
-      {days.map((day) => {
-        const photos = allPhotos.filter((p) => p.day_number === day);
-        return (
-          <div key={day} className="card">
-            <h2 className="mb-3 font-semibold">Dag {day}</h2>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {photos.map((p) => (
-                <div
-                  key={p.id}
-                  className="overflow-hidden rounded-xl border border-stone-200 bg-stone-50"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={photoPublicUrl(p.storage_path)}
-                    alt={catName(p.category_id)}
-                    className="h-36 w-full object-cover"
-                  />
-                  <div className="p-2 text-xs font-medium text-stone-600">
-                    {catName(p.category_id)}
-                  </div>
-                </div>
-              ))}
-            </div>
+      {withPhotos.map(({ category, photos }) => (
+        <div key={category.id} className="card">
+          <h2 className="font-bold">{category.name}</h2>
+          {category.description && (
+            <p className="mb-3 text-xs text-stone-400">{category.description}</p>
+          )}
+          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {photos.map((p) => (
+              <div
+                key={p.id}
+                className="overflow-hidden rounded-2xl bg-white/60"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={photoPublicUrl(p.storage_path)}
+                  alt={category.name}
+                  className="h-36 w-full object-cover"
+                />
+              </div>
+            ))}
           </div>
-        );
-      })}
+        </div>
+      ))}
     </div>
   );
 }
