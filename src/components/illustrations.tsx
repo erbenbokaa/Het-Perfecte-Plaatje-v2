@@ -74,6 +74,45 @@ export function StarIllustration({ className }: Props) {
   );
 }
 
+export function HomeIllustration({ className }: Props) {
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-hidden>
+      <defs>
+        <linearGradient id="home-roof" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#fb923c" />
+          <stop offset="1" stopColor="#f43f6e" />
+        </linearGradient>
+      </defs>
+      <path d="M32 8 L57 30 H7 Z" fill="url(#home-roof)" />
+      <rect x="14" y="29" width="36" height="27" rx="3" fill="#fff3e0" />
+      <rect x="28" y="40" width="9" height="16" rx="1.5" fill="#14b8a6" />
+      <circle cx="42" cy="40" r="3" fill="#38bdf8" />
+    </svg>
+  );
+}
+
+export function CogIllustration({ className }: Props) {
+  const teeth = [0, 45, 90, 135, 180, 225, 270, 315].map((deg) => {
+    const r = (deg * Math.PI) / 180;
+    return { x: 32 + Math.cos(r) * 17 - 3, y: 32 + Math.sin(r) * 17 - 3 };
+  });
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-hidden>
+      <defs>
+        <linearGradient id="cog-grad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#94a3b8" />
+          <stop offset="1" stopColor="#475569" />
+        </linearGradient>
+      </defs>
+      {teeth.map((t, i) => (
+        <rect key={i} x={t.x} y={t.y} width="6" height="6" rx="1.5" fill="url(#cog-grad)" />
+      ))}
+      <circle cx="32" cy="32" r="16" fill="url(#cog-grad)" />
+      <circle cx="32" cy="32" r="6.5" fill="#fff3e0" />
+    </svg>
+  );
+}
+
 export function TrophyIllustration({ className }: Props) {
   return (
     <svg viewBox="0 0 64 64" className={className} aria-hidden>

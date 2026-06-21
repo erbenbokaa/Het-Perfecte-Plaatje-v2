@@ -7,6 +7,7 @@ import {
   getPhotosByParticipant,
 } from "@/lib/db";
 import { photoPublicUrl } from "@/lib/supabase";
+import GalleryView from "@/components/GalleryView";
 
 export const dynamic = "force-dynamic";
 
@@ -45,10 +46,14 @@ export default async function GalleryPage() {
   }
 
   // Alleen categorieën met inzendingen, in de ingestelde volgorde.
-  const withPhotos = categories
+  const groups = categories
     .map((c) => ({
-      category: c,
-      photos: allPhotos.filter((p) => p.category_id === c.id),
+      id: c.id,
+      name: c.name,
+      description: c.description,
+      photos: allPhotos
+        .filter((p) => p.category_id === c.id)
+        .map((p) => ({ id: p.id, url: photoPublicUrl(p.storage_path) })),
     }))
     .filter((g) => g.photos.length > 0);
 
@@ -57,40 +62,19 @@ export default async function GalleryPage() {
       <div className="card">
         <h1 className="text-xl font-bold">Galerij</h1>
         <p className="text-sm text-stone-600">
-          Alle ingeleverde foto's ({allPhotos.length}), per categorie. Wie welke
-          foto maakte blijft geheim tot de uitslag. 🤫
+          Alle ingeleverde foto's ({allPhotos.length}), per categorie. Tik op een
+          foto om 'm groot te zien. Wie welke foto maakte blijft geheim tot de
+          uitslag. 🤫
         </p>
       </div>
 
-      {withPhotos.length === 0 && (
+      {groups.length === 0 ? (
         <div className="card text-sm text-stone-500">
           Er zijn nog geen foto's ingeleverd.
         </div>
+      ) : (
+        <GalleryView groups={groups} />
       )}
-
-      {withPhotos.map(({ category, photos }) => (
-        <div key={category.id} className="card">
-          <h2 className="font-bold">{category.name}</h2>
-          {category.description && (
-            <p className="mb-3 text-xs text-stone-400">{category.description}</p>
-          )}
-          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {photos.map((p) => (
-              <div
-                key={p.id}
-                className="overflow-hidden rounded-2xl bg-white/60"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={photoPublicUrl(p.storage_path)}
-                  alt={category.name}
-                  className="h-36 w-full object-cover"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
     </div>
   );
 }
