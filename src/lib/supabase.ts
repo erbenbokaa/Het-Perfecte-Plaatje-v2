@@ -10,7 +10,7 @@ let cached: SupabaseClient | null = null;
 export function getSupabaseAdmin(): SupabaseClient {
   if (cached) return cached;
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const url = supabaseUrl();
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!url || !key) {
@@ -26,10 +26,14 @@ export function getSupabaseAdmin(): SupabaseClient {
   return cached;
 }
 
+/** Project-URL zonder onbedoelde schuine streep aan het eind. */
+function supabaseUrl(): string {
+  return (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/+$/, "");
+}
+
 export const PHOTO_BUCKET = "photos";
 
 /** Publieke URL voor een opgeslagen foto. */
 export function photoPublicUrl(storagePath: string): string {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-  return `${url}/storage/v1/object/public/${PHOTO_BUCKET}/${storagePath}`;
+  return `${supabaseUrl()}/storage/v1/object/public/${PHOTO_BUCKET}/${storagePath}`;
 }
