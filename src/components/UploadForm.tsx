@@ -6,11 +6,11 @@ import { uploadPhotoAction } from "@/app/actions/photos";
 import type { Category } from "@/lib/types";
 
 export default function UploadForm({
-  categories,
-  numDays,
+  remainingCategories,
+  currentDay,
 }: {
-  categories: Category[];
-  numDays: number;
+  remainingCategories: Category[];
+  currentDay: number;
 }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
@@ -25,7 +25,7 @@ export default function UploadForm({
     const res = await uploadPhotoAction(data);
     setBusy(false);
     if (res?.ok) {
-      setMsg({ type: "ok", text: "Foto opgeslagen! 🎉" });
+      setMsg({ type: "ok", text: "Foto ingeleverd! 🎉" });
       formRef.current?.reset();
       router.refresh();
     } else {
@@ -33,30 +33,22 @@ export default function UploadForm({
     }
   }
 
-  const days = Array.from({ length: numDays }, (_, i) => i + 1);
-
   return (
     <form ref={formRef} onSubmit={onSubmit} className="space-y-4">
+      <div className="rounded-xl bg-ocean/5 px-4 py-3 text-sm text-stone-600">
+        📅 Dit wordt opgeslagen als <span className="font-semibold text-ocean">dag {currentDay}</span>.
+        De dag wordt automatisch bepaald.
+      </div>
+
       <div>
         <label className="label">Categorie</label>
         <select name="category_id" className="input" required defaultValue="">
           <option value="" disabled>
             Kies een categorie…
           </option>
-          {categories.map((c) => (
+          {remainingCategories.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div>
-        <label className="label">Welke dag?</label>
-        <select name="day_number" className="input" defaultValue="1">
-          {days.map((d) => (
-            <option key={d} value={d}>
-              Dag {d}
             </option>
           ))}
         </select>
@@ -74,17 +66,17 @@ export default function UploadForm({
         />
       </div>
 
-      <div>
-        <label className="label">Bijschrift (optioneel)</label>
-        <input name="caption" className="input" maxLength={200} placeholder="bijv. zonsondergang op het strand" />
+      <div className="rounded-xl bg-amber-50 px-4 py-3 text-xs text-amber-800">
+        ⚠️ Let op: zodra je inlevert is je keuze <strong>definitief</strong>. Je kunt
+        een foto daarna niet meer wijzigen of verwijderen.
       </div>
 
       {msg && (
         <div
           className={
             msg.type === "ok"
-              ? "rounded-lg bg-green-50 border border-green-200 text-green-700 px-4 py-2 text-sm"
-              : "rounded-lg bg-red-50 border border-red-200 text-red-700 px-4 py-2 text-sm"
+              ? "rounded-xl bg-green-50 border border-green-200 text-green-700 px-4 py-3 text-sm"
+              : "rounded-xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm"
           }
         >
           {msg.text}
@@ -92,7 +84,7 @@ export default function UploadForm({
       )}
 
       <button type="submit" className="btn-primary w-full" disabled={busy}>
-        {busy ? "Bezig met uploaden…" : "Foto uploaden"}
+        {busy ? "Bezig met inleveren…" : "Foto inleveren"}
       </button>
     </form>
   );

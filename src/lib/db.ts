@@ -15,7 +15,9 @@ export async function getSettings(): Promise<Settings> {
 }
 
 export async function updateSettings(
-  patch: Partial<Pick<Settings, "competition_name" | "num_days" | "phase">>
+  patch: Partial<
+    Pick<Settings, "competition_name" | "num_days" | "phase" | "start_date">
+  >
 ): Promise<void> {
   const sb = getSupabaseAdmin();
   const { error } = await sb.from("settings").update(patch).eq("id", 1);

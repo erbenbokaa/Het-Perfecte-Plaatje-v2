@@ -2,8 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
-import { getSettings, insertPhoto, deletePhoto, getPhotosByParticipant } from "@/lib/db";
+import {
+  getSettings,
+  insertPhoto,
+  getPhotosByParticipant,
+  getCategories,
+} from "@/lib/db";
 import { getSupabaseAdmin, PHOTO_BUCKET } from "@/lib/supabase";
+import { currentDayNumber } from "@/lib/competition";
 
 const MAX_BYTES = 15 * 1024 * 1024; // 15 MB
 const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
@@ -16,16 +22,33 @@ export async function uploadPhotoAction(formData: FormData) {
   }
 
   const categoryId = String(formData.get("category_id") ?? "");
-  const dayNumber = Number(formData.get("day_number") ?? 1);
-  const caption = String(formData.get("caption") ?? "").trim().slice(0, 200);
   const file = formData.get("photo") as File | null;
 
   if (!categoryId) return { ok: false, error: "Kies een categorie." };
+
+  // Geldige categorie?
+  const categories = await getCategories();
+  if (!categories.some((c) => c.id === categoryId)) {
+    return { ok: false, error: "Onbekende categorie." };
+  }
+
+  // Eén inzending per categorie: definitief, niet te wijzigen.
+  const mine = await getPhotosByParticipant(user.id);
+  if (mine.some((p) => p.category_id === categoryId)) {
+    return {
+      ok: false,
+      error: "Je hebt voor deze categorie al een foto ingeleverd.",
+    };
+  }
+
   if (!file || file.size === 0) return { ok: false, error: "Kies een foto." };
   if (file.size > MAX_BYTES) return { ok: false, error: "Foto is te groot (max 15 MB)." };
   if (!ALLOWED.includes(file.type)) {
     return { ok: false, error: "Alleen JPG, PNG, WEBP of HEIC." };
   }
+
+  // Dag wordt automatisch bepaald op basis van de startdatum.
+  const dayNumber = currentDayNumber(settings.start_date, settings.num_days);
 
   const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
   // Willekeurige bestandsnaam zodat de URL de inzender niet verraadt.
@@ -41,31 +64,13 @@ export async function uploadPhotoAction(formData: FormData) {
   await insertPhoto({
     participant_id: user.id,
     category_id: categoryId,
-    day_number: Number.isFinite(dayNumber) && dayNumber > 0 ? dayNumber : 1,
+    day_number: dayNumber,
     storage_path: path,
-    caption,
+    caption: "",
   });
 
   revalidatePath("/upload");
+  revalidatePath("/gallery");
   revalidatePath("/dashboard");
   return { ok: true };
-}
-
-export async function deletePhotoAction(formData: FormData): Promise<void> {
-  const user = await requireUser();
-  const settings = await getSettings();
-  // Verwijderen kan alleen tijdens de upload-fase en alleen je eigen foto's.
-  if (settings.phase !== "upload") return;
-
-  const photoId = String(formData.get("photo_id") ?? "");
-  const mine = await getPhotosByParticipant(user.id);
-  const photo = mine.find((p) => p.id === photoId);
-  if (!photo) return;
-
-  const sb = getSupabaseAdmin();
-  await sb.storage.from(PHOTO_BUCKET).remove([photo.storage_path]);
-  await deletePhoto(photoId, user.id);
-
-  revalidatePath("/upload");
-  revalidatePath("/dashboard");
 }

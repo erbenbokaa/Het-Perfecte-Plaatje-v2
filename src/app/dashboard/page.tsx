@@ -54,7 +54,7 @@ export default async function DashboardPage() {
           title="📤 Uploaden"
           active={settings.phase === "upload"}
           href="/upload"
-          stat={`${myPhotos.length} foto's ingestuurd`}
+          stat={`${new Set(myPhotos.map((p) => p.category_id)).size}/${categories.length} categorieën klaar`}
           disabledText="Uploaden is nu niet open"
         />
         <DashboardCard

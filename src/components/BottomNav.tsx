@@ -21,6 +21,15 @@ function CameraIcon({ className }: IconProps) {
     </svg>
   );
 }
+function GalleryIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
+      <rect x="3" y="4" width="18" height="16" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="8.5" cy="9" r="1.6" stroke="currentColor" strokeWidth="1.6" />
+      <path d="m4 17 4.5-4 3 2.5L15 12l5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 function StarIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
@@ -48,6 +57,7 @@ function CogIcon({ className }: IconProps) {
 const ITEMS = [
   { href: "/dashboard", label: "Home", Icon: HomeIcon },
   { href: "/upload", label: "Uploaden", Icon: CameraIcon },
+  { href: "/gallery", label: "Galerij", Icon: GalleryIcon },
   { href: "/vote", label: "Stemmen", Icon: StarIcon },
   { href: "/results", label: "Uitslag", Icon: TrophyIcon },
 ];

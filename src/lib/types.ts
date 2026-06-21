@@ -40,6 +40,7 @@ export interface Settings {
   competition_name: string;
   num_days: number;
   phase: Phase;
+  start_date: string | null;
 }
 
 export interface SessionUser {

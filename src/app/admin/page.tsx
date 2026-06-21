@@ -89,6 +89,18 @@ export default async function AdminPage() {
               defaultValue={settings.num_days}
             />
           </div>
+          <div>
+            <label className="label">Startdatum (dag 1)</label>
+            <input
+              name="start_date"
+              type="date"
+              className="input"
+              defaultValue={settings.start_date ?? ""}
+            />
+            <p className="mt-1 text-xs text-stone-400">
+              Hiermee bepaalt de app automatisch welke dag het is bij het uploaden.
+            </p>
+          </div>
           <input type="hidden" name="phase" value={settings.phase} />
           <button className="btn-primary">Opslaan</button>
         </form>

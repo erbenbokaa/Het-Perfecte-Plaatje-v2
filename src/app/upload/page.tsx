@@ -1,7 +1,8 @@
+import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { getSettings, getCategories, getPhotosByParticipant } from "@/lib/db";
 import { photoPublicUrl } from "@/lib/supabase";
-import { deletePhotoAction } from "@/app/actions/photos";
+import { currentDayNumber } from "@/lib/competition";
 import UploadForm from "@/components/UploadForm";
 
 export const dynamic = "force-dynamic";
@@ -19,61 +20,119 @@ export default async function UploadPage() {
       <div className="card text-center">
         <h1 className="text-xl font-bold mb-2">📤 Uploaden</h1>
         <p className="text-stone-600">
-          Uploaden is op dit moment niet open. Status:{" "}
-          <span className="font-medium">{settings.phase}</span>.
+          Uploaden is op dit moment niet open.
         </p>
       </div>
     );
   }
 
-  const catName = (id: string) =>
-    categories.find((c) => c.id === id)?.name ?? "?";
+  const dayByCategory = new Map(myPhotos.map((p) => [p.category_id, p]));
+  const remaining = categories.filter((c) => !dayByCategory.has(c.id));
+  const doneCount = categories.length - remaining.length;
+  const currentDay = currentDayNumber(settings.start_date, settings.num_days);
+  const catName = (id: string) => categories.find((c) => c.id === id)?.name ?? "?";
 
   return (
     <div className="space-y-6">
+      {/* Checklist */}
       <div className="card">
-        <h1 className="text-xl font-bold mb-1">📤 Foto uploaden</h1>
-        <p className="text-sm text-stone-600 mb-4">
-          Kies een categorie en de dag waarop je de foto gemaakt hebt. Je kunt
-          per categorie meerdere foto's insturen.
-        </p>
+        <div className="mb-3 flex items-center justify-between">
+          <h1 className="text-xl font-bold">Mijn categorieën</h1>
+          <span className="rounded-full bg-ocean/10 px-3 py-1 text-sm font-semibold text-ocean">
+            {doneCount}/{categories.length} klaar
+          </span>
+        </div>
         {categories.length === 0 ? (
-          <p className="text-stone-500 text-sm">
+          <p className="text-sm text-stone-500">
             Er zijn nog geen categorieën aangemaakt. Vraag de beheerder.
           </p>
         ) : (
-          <UploadForm categories={categories} numDays={settings.num_days} />
+          <ul className="space-y-2">
+            {categories.map((c) => {
+              const photo = dayByCategory.get(c.id);
+              const done = Boolean(photo);
+              return (
+                <li
+                  key={c.id}
+                  className={
+                    "flex items-center gap-3 rounded-xl px-3 py-2.5 " +
+                    (done ? "bg-green-50" : "bg-stone-50")
+                  }
+                >
+                  <span
+                    className={
+                      "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-sm " +
+                      (done ? "bg-green-500 text-white" : "border-2 border-stone-300 text-transparent")
+                    }
+                  >
+                    ✓
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className={"font-medium " + (done ? "text-stone-700" : "text-stone-800")}>
+                      {c.name}
+                    </span>
+                    {c.description && (
+                      <span className="block truncate text-xs text-stone-400">{c.description}</span>
+                    )}
+                  </span>
+                  {done && (
+                    <span className="shrink-0 text-xs text-green-600">
+                      dag {photo!.day_number}
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
         )}
       </div>
 
+      {/* Uploadformulier */}
+      {categories.length > 0 && (
+        <div className="card">
+          <h2 className="mb-1 text-lg font-semibold">📤 Foto inleveren</h2>
+          {remaining.length === 0 ? (
+            <div className="rounded-xl bg-green-50 px-4 py-3 text-sm text-green-700">
+              🎉 Je hebt voor elke categorie een foto ingeleverd. Helemaal klaar!
+            </div>
+          ) : (
+            <>
+              <p className="mb-4 text-sm text-stone-600">
+                Kies een categorie die je nog moet doen en lever je foto in.
+              </p>
+              <UploadForm remainingCategories={remaining} currentDay={currentDay} />
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Mijn inzendingen (definitief) */}
       <div className="card">
-        <h2 className="font-semibold mb-3">
-          Mijn foto's ({myPhotos.length})
-        </h2>
+        <h2 className="mb-3 font-semibold">Mijn inzendingen ({myPhotos.length})</h2>
         {myPhotos.length === 0 ? (
-          <p className="text-stone-500 text-sm">Nog niets ingestuurd.</p>
+          <p className="text-sm text-stone-500">Nog niets ingeleverd.</p>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {myPhotos.map((p) => (
-              <div key={p.id} className="rounded-lg overflow-hidden border border-stone-200 bg-stone-50">
+              <div key={p.id} className="overflow-hidden rounded-xl border border-stone-200 bg-stone-50">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={photoPublicUrl(p.storage_path)}
-                  alt={p.caption || catName(p.category_id)}
-                  className="w-full h-32 object-cover"
+                  alt={catName(p.category_id)}
+                  className="h-32 w-full object-cover"
                 />
                 <div className="p-2 text-xs">
                   <div className="font-medium">{catName(p.category_id)}</div>
                   <div className="text-stone-500">Dag {p.day_number}</div>
-                  {p.caption && <div className="text-stone-500 italic">{p.caption}</div>}
-                  <form action={deletePhotoAction} className="mt-1">
-                    <input type="hidden" name="photo_id" value={p.id} />
-                    <button className="text-red-600 hover:underline">verwijderen</button>
-                  </form>
                 </div>
               </div>
             ))}
           </div>
+        )}
+        {myPhotos.length > 0 && (
+          <Link href="/gallery" className="btn-secondary mt-4 w-full">
+            Bekijk alle ingeleverde foto's →
+          </Link>
         )}
       </div>
     </div>

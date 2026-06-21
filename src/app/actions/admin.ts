@@ -21,11 +21,15 @@ export async function updateSettingsAction(formData: FormData) {
   const competition_name = String(formData.get("competition_name") ?? "").trim();
   const num_days = Number(formData.get("num_days") ?? 7);
   const phase = String(formData.get("phase") ?? "setup") as Phase;
+  const startRaw = String(formData.get("start_date") ?? "").trim();
+  // Verwacht YYYY-MM-DD; leeg betekent geen startdatum.
+  const start_date = /^\d{4}-\d{2}-\d{2}$/.test(startRaw) ? startRaw : null;
 
   await updateSettings({
     competition_name: competition_name || "Het Perfecte Plaatje",
     num_days: Number.isFinite(num_days) && num_days > 0 ? Math.min(num_days, 60) : 7,
     phase: PHASES.includes(phase) ? phase : "setup",
+    start_date,
   });
   revalidatePath("/admin");
   revalidatePath("/", "layout");

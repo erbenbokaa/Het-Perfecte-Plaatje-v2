@@ -50,10 +50,14 @@ create table if not exists settings (
   id                int primary key default 1,
   competition_name  text not null default 'Het Perfecte Plaatje',
   num_days          int not null default 7,
+  start_date        date,
   phase             text not null default 'setup'
                     check (phase in ('setup', 'upload', 'voting', 'results')),
   constraint settings_singleton check (id = 1)
 );
+
+-- Bestaande installaties: voeg de kolom toe als hij nog niet bestaat.
+alter table settings add column if not exists start_date date;
 
 insert into settings (id) values (1) on conflict (id) do nothing;
 
