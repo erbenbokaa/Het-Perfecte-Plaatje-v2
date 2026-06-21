@@ -20,10 +20,10 @@ body {
   min-height: 100dvh;
   background: linear-gradient(
     178deg,
-    #fdeede 0%,
-    #fdf4ea 38%,
-    #eef0e2 70%,
-    #d8e9df 100%
+    #ffe6cc 0%,
+    #ffeede 34%,
+    #eaf0d8 68%,
+    #c7e8da 100%
   );
   background-attachment: fixed;
 }
@@ -41,7 +41,7 @@ textarea {
   top: 0;
   z-index: 40;
   padding-top: var(--safe-top);
-  background: rgba(253, 241, 226, 0.6);
+  background: rgba(255, 230, 204, 0.55);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
 }
