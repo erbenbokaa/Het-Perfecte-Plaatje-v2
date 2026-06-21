@@ -34,20 +34,18 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="card">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <div>
-            <h1 className="text-2xl font-bold">Hoi {user.name}! 👋</h1>
-            <p className="text-stone-600">
-              Status:{" "}
-              <span className="font-semibold text-ocean">
-                {PHASE_LABEL[settings.phase]}
-              </span>
-            </p>
-          </div>
-          <div className="text-right text-sm text-stone-500">
-            <div>{participants.length} deelnemers</div>
-            <div>{categories.length} categorieën · {settings.num_days} dagen</div>
-          </div>
+        <h1 className="text-2xl font-bold tracking-tight">Hoi {user.name}! 👋</h1>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-ocean/10 px-3 py-1 text-sm font-semibold text-ocean">
+            <span className="h-1.5 w-1.5 rounded-full bg-ocean" />
+            {PHASE_LABEL[settings.phase]}
+          </span>
+          <span className="rounded-full bg-stone-100 px-3 py-1 text-sm text-stone-500">
+            {participants.length} deelnemers
+          </span>
+          <span className="rounded-full bg-stone-100 px-3 py-1 text-sm text-stone-500">
+            {categories.length} categorieën · {settings.num_days} dagen
+          </span>
         </div>
       </div>
 
