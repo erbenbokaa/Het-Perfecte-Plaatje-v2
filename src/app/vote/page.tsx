@@ -38,7 +38,7 @@ export default async function VotePage() {
         <p className="text-sm text-stone-600">
           Kies per categorie je top 3. Je 1e plek krijgt 3 punten, je 2e 2 punten
           en je 3e 1 punt. Je stemt anoniem en je eigen foto's zie je hier niet.
-          Je kunt je keuze aanpassen zolang het stemmen open is.
+          Let op: zodra je je stem opslaat, staat die vast.
         </p>
       </div>
 
@@ -62,6 +62,8 @@ export default async function VotePage() {
           return v?.photo_id ?? "";
         });
 
+        const locked = myVotes.some((v) => v.category_id === cat.id);
+
         return (
           <VoteCategory
             key={cat.id}
@@ -70,6 +72,7 @@ export default async function VotePage() {
             description={cat.description}
             photos={photos}
             initialRanking={initialRanking}
+            locked={locked}
           />
         );
       })}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveVotesAction } from "@/app/actions/votes";
+import RankBadge from "@/components/RankBadge";
 
 export interface VotePhoto {
   id: string;
@@ -23,15 +24,16 @@ export default function VoteCategory({
   description,
   photos,
   initialRanking,
+  locked,
 }: {
   categoryId: string;
   categoryName: string;
   description: string;
   photos: VotePhoto[];
   initialRanking: string[]; // geordend [1e, 2e, 3e]
+  locked: boolean;
 }) {
   const router = useRouter();
-  // photoId -> rank (1,2,3). Afgeleid uit initialRanking.
   const initial: Record<string, number> = {};
   initialRanking.forEach((pid, i) => {
     if (pid) initial[pid] = i + 1;
@@ -45,12 +47,10 @@ export default function VoteCategory({
     setMsg(null);
     setRanks((prev) => {
       const next: Record<string, number> = { ...prev };
-      // Als deze foto die rank al had -> deselecteren.
       if (next[photoId] === rank) {
         delete next[photoId];
         return next;
       }
-      // Verwijder de rank bij een eventuele andere foto (rank is uniek).
       for (const id of Object.keys(next)) {
         if (next[id] === rank) delete next[id];
       }
@@ -60,18 +60,27 @@ export default function VoteCategory({
   }
 
   async function save() {
-    setBusy(true);
-    setMsg(null);
-    // Bouw geordende lijst [1e, 2e, 3e].
     const ordered: string[] = [];
     for (let r = 1; r <= 3; r++) {
       const found = Object.keys(ranks).find((id) => ranks[id] === r);
       if (found) ordered.push(found);
     }
+    if (ordered.length === 0) {
+      setMsg({ type: "err", text: "Kies minstens één foto." });
+      return;
+    }
+    if (
+      !window.confirm(
+        "Weet je het zeker? Je stem voor deze categorie staat hierna vast en kan niet meer gewijzigd worden."
+      )
+    ) {
+      return;
+    }
+    setBusy(true);
+    setMsg(null);
     const res = await saveVotesAction(categoryId, ordered);
     setBusy(false);
     if (res?.ok) {
-      setMsg({ type: "ok", text: "Stem opgeslagen ✓" });
       router.refresh();
     } else {
       setMsg({ type: "err", text: res?.error ?? "Er ging iets mis." });
@@ -80,13 +89,44 @@ export default function VoteCategory({
 
   const chosen = Object.keys(ranks).length;
 
+  // ---- Vergrendelde weergave: al gestemd ----
+  if (locked) {
+    const chosenPhotos = photos.filter((p) => initial[p.id]);
+    return (
+      <div className="card">
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <h2 className="text-lg font-semibold">{categoryName}</h2>
+          <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
+            ✓ gestemd
+          </span>
+        </div>
+        <p className="mb-3 text-sm text-stone-500">Je stem staat vast.</p>
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-3">
+          {chosenPhotos
+            .sort((a, b) => initial[a.id] - initial[b.id])
+            .map((p) => (
+              <div key={p.id} className="relative overflow-hidden rounded-xl">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={p.url} alt="foto" className="h-32 w-full object-cover" />
+                <RankBadge
+                  rank={initial[p.id]}
+                  className="absolute left-1.5 top-1.5 h-7 w-7 text-sm"
+                />
+              </div>
+            ))}
+        </div>
+      </div>
+    );
+  }
+
+  // ---- Stemmen ----
   return (
     <div className="card">
-      <div className="flex items-baseline justify-between gap-2 mb-1">
+      <div className="mb-1 flex items-baseline justify-between gap-2">
         <h2 className="text-lg font-semibold">{categoryName}</h2>
         <span className="text-xs text-stone-500">{chosen}/3 gekozen</span>
       </div>
-      {description && <p className="text-sm text-stone-500 mb-3">{description}</p>}
+      {description && <p className="mb-3 text-sm text-stone-500">{description}</p>}
 
       {photos.length === 0 ? (
         <p className="text-sm text-stone-500">
@@ -94,24 +134,19 @@ export default function VoteCategory({
         </p>
       ) : (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {photos.map((p) => {
               const r = ranks[p.id];
               return (
                 <div
                   key={p.id}
                   className={
-                    "rounded-lg overflow-hidden border-2 " +
+                    "overflow-hidden rounded-lg border-2 " +
                     (r ? "border-sunset" : "border-stone-200")
                   }
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={p.url} alt={p.caption || "foto"} className="w-full h-40 object-cover" />
-                  {p.caption && (
-                    <div className="px-2 py-1 text-xs text-stone-500 italic truncate">
-                      {p.caption}
-                    </div>
-                  )}
+                  <img src={p.url} alt="foto" className="h-40 w-full object-cover" />
                   <div className="flex">
                     {[1, 2, 3].map((rank) => (
                       <button
@@ -139,15 +174,18 @@ export default function VoteCategory({
               className={
                 "mt-3 rounded-lg px-4 py-2 text-sm " +
                 (msg.type === "ok"
-                  ? "bg-green-50 border border-green-200 text-green-700"
-                  : "bg-red-50 border border-red-200 text-red-700")
+                  ? "border border-green-200 bg-green-50 text-green-700"
+                  : "border border-red-200 bg-red-50 text-red-700")
               }
             >
               {msg.text}
             </div>
           )}
 
-          <button onClick={save} className="btn-primary mt-4" disabled={busy}>
+          <p className="mt-3 text-xs text-amber-700">
+            ⚠️ Let op: na opslaan kun je je stem voor deze categorie niet meer wijzigen.
+          </p>
+          <button onClick={save} className="btn-primary mt-2" disabled={busy}>
             {busy ? "Opslaan…" : "Stem opslaan"}
           </button>
         </>
