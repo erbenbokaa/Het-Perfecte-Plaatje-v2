@@ -60,7 +60,6 @@ export default function UploadForm({
           name="photo"
           type="file"
           accept="image/*"
-          capture="environment"
           className="input"
           required
         />
