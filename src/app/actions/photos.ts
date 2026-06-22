@@ -9,7 +9,7 @@ import {
   getCategories,
 } from "@/lib/db";
 import { getSupabaseAdmin, PHOTO_BUCKET } from "@/lib/supabase";
-import { currentDayNumber } from "@/lib/competition";
+import { currentDayNumber, nlDate, todayInNL } from "@/lib/competition";
 
 const MAX_BYTES = 15 * 1024 * 1024; // 15 MB
 const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
@@ -37,8 +37,9 @@ export async function uploadPhotoAction(formData: FormData) {
 
   const mine = await getPhotosByParticipant(user.id);
 
-  // Maximaal één foto per dag.
-  if (mine.some((p) => p.day_number === dayNumber)) {
+  // Maximaal één foto per (echte) kalenderdag, los van de startdatum.
+  const today = todayInNL();
+  if (mine.some((p) => nlDate(p.created_at) === today)) {
     return {
       ok: false,
       error: "Je hebt vandaag al een foto ingeleverd. Kom morgen terug voor de volgende dag!",

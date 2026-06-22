@@ -5,6 +5,11 @@ export function todayInNL(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: TZ });
 }
 
+/** De kalenderdatum (NL-tijd) van een tijdstempel, als YYYY-MM-DD. */
+export function nlDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-CA", { timeZone: TZ });
+}
+
 /**
  * Bepaalt automatisch welke wedstrijddag het vandaag is op basis van de
  * startdatum. Dag 1 = de startdatum. Wordt begrensd tussen 1 en numDays.

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { getSettings, getCategories, getPhotosByParticipant } from "@/lib/db";
 import { photoPublicUrl } from "@/lib/supabase";
-import { currentDayNumber } from "@/lib/competition";
+import { currentDayNumber, nlDate, todayInNL } from "@/lib/competition";
 import { CheckIcon } from "@/components/icons";
 import UploadForm from "@/components/UploadForm";
 
@@ -32,7 +32,9 @@ export default async function UploadPage() {
   const orderedCategories = [...remaining, ...done];
   const doneCount = done.length;
   const currentDay = currentDayNumber(settings.start_date, settings.num_days);
-  const uploadedToday = myPhotos.some((p) => p.day_number === currentDay);
+  const uploadedToday = myPhotos.some(
+    (p) => nlDate(p.created_at) === todayInNL()
+  );
   const catName = (id: string) => categories.find((c) => c.id === id)?.name ?? "?";
 
   return (
@@ -47,8 +49,8 @@ export default async function UploadPage() {
             </div>
           ) : uploadedToday ? (
             <div className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              Je hebt vandaag (dag {currentDay}) al een foto ingeleverd. Morgen
-              mag je er weer één kiezen!
+              Je hebt vandaag al een foto ingeleverd. Morgen mag je er weer één
+              kiezen!
             </div>
           ) : (
             <>
