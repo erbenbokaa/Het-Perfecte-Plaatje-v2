@@ -1,4 +1,5 @@
 import { requireUser } from "@/lib/auth";
+import Link from "next/link";
 import {
   getSettings,
   getCategories,
@@ -48,6 +49,20 @@ export default async function ResultsPage() {
           voor de familie.
         </div>
       )}
+
+      <Link
+        href="/reveal"
+        className="flex items-center gap-4 rounded-[28px] border border-white/70 bg-gradient-to-br from-orange-400 to-rose-400 p-5 text-white shadow-[0_12px_30px_-14px_rgba(244,63,110,0.6)] transition active:scale-[0.98]"
+      >
+        <span className="text-3xl">🎬</span>
+        <span className="flex-1">
+          <span className="block text-lg font-extrabold">Start de award-show</span>
+          <span className="block text-sm text-white/90">
+            De grote onthulling — perfect voor op de tv
+          </span>
+        </span>
+        <span className="text-2xl">▶</span>
+      </Link>
 
       <div className="card">
         <h1 className="mb-4 flex items-center gap-2 text-2xl font-bold">
