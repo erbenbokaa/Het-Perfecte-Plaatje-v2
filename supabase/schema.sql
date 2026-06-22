@@ -61,6 +61,20 @@ alter table settings add column if not exists start_date date;
 
 insert into settings (id) values (1) on conflict (id) do nothing;
 
+-- Erelijst over de jaren heen (Hall of Fame).
+create table if not exists hall_of_fame (
+  id           uuid primary key default gen_random_uuid(),
+  year         int not null,
+  kind         text not null check (kind in ('champion', 'category')),
+  title        text not null,
+  winner_name  text not null,
+  points       int not null default 0,
+  photo_path   text,
+  sort_order   int not null default 0,
+  created_at   timestamptz not null default now()
+);
+create index if not exists idx_hof_year on hall_of_fame(year);
+
 -- ---------------------------------------------------------------------------
 -- Storage bucket voor de foto's
 -- ---------------------------------------------------------------------------

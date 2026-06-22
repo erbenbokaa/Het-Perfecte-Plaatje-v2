@@ -49,5 +49,16 @@ export interface SessionUser {
   is_admin: boolean;
 }
 
+export interface HallOfFameEntry {
+  id: string;
+  year: number;
+  kind: "champion" | "category";
+  title: string;
+  winner_name: string;
+  points: number;
+  photo_path: string | null;
+  sort_order: number;
+}
+
 // Punten per positie in je top 3.
 export const POINTS_BY_RANK: Record<number, number> = { 1: 3, 2: 2, 3: 1 };

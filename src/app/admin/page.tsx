@@ -6,6 +6,7 @@ import {
   getPhotos,
 } from "@/lib/db";
 import type { Phase } from "@/lib/types";
+import Link from "next/link";
 import {
   updateSettingsAction,
   setPhaseAction,
@@ -13,6 +14,7 @@ import {
   deleteCategoryAction,
   addParticipantAction,
   deleteParticipantAction,
+  archiveToHallOfFameAction,
 } from "@/app/actions/admin";
 
 export const dynamic = "force-dynamic";
@@ -169,6 +171,37 @@ export default async function AdminPage() {
           Tip: geef iedereen een eigen code en deel die persoonlijk. Een code
           kan niet teruggelezen worden; verwijder en maak opnieuw aan om te
           wijzigen.
+        </p>
+      </div>
+
+      {/* Hall of Fame */}
+      <div className="card">
+        <h2 className="font-semibold mb-1">Hall of Fame</h2>
+        <p className="text-sm text-stone-600 mb-3">
+          Leg de winnaars van dit jaar vast in de erelijst. Doe dit aan het eind
+          van de vakantie, als de uitslag definitief is. Opnieuw archiveren met
+          hetzelfde jaartal werkt het bij.
+        </p>
+        <form action={archiveToHallOfFameAction} className="flex flex-wrap items-end gap-2">
+          <div>
+            <label className="label">Jaar</label>
+            <input
+              name="year"
+              type="number"
+              min={2000}
+              max={2100}
+              className="input"
+              defaultValue={new Date().getFullYear()}
+            />
+          </div>
+          <button className="btn-primary">Archiveer naar Hall of Fame</button>
+        </form>
+        <Link href="/hall-of-fame" className="btn-secondary mt-3 inline-flex">
+          Bekijk de Hall of Fame
+        </Link>
+        <p className="mt-2 text-xs text-stone-400">
+          Let op: verwijder de foto's daarna niet uit Supabase Storage, anders
+          verdwijnen de plaatjes in de erelijst.
         </p>
       </div>
     </div>

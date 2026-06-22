@@ -11,8 +11,13 @@ import {
   createParticipant,
   deleteParticipant,
   getParticipantWithCode,
+  getPhotos,
+  getVotes,
+  getParticipants,
+  replaceHallOfFameYear,
 } from "@/lib/db";
-import type { Phase } from "@/lib/types";
+import { computeCategoryResults, computeLeaderboard } from "@/lib/scoring";
+import type { Phase, HallOfFameEntry } from "@/lib/types";
 
 const PHASES: Phase[] = ["setup", "upload", "voting", "results"];
 
@@ -78,5 +83,54 @@ export async function deleteParticipantAction(formData: FormData) {
   const me = await requireAdmin();
   const id = String(formData.get("id") ?? "");
   if (id && id !== me.id) await deleteParticipant(id);
+  revalidatePath("/admin");
+}
+
+/** Archiveert de huidige uitslag (kampioen + categoriewinnaars) in de Hall of Fame. */
+export async function archiveToHallOfFameAction(formData: FormData) {
+  await requireAdmin();
+  const year = Number(formData.get("year"));
+  if (!Number.isInteger(year) || year < 2000 || year > 2100) return;
+
+  const [categories, photos, votes, participants] = await Promise.all([
+    getCategories(),
+    getPhotos(),
+    getVotes(),
+    getParticipants(),
+  ]);
+  const catResults = computeCategoryResults(categories, photos, votes, participants);
+  const leaderboard = computeLeaderboard(catResults, participants);
+
+  const rows: Omit<HallOfFameEntry, "id">[] = [];
+  const champ = leaderboard[0];
+  if (champ && champ.totalPoints > 0) {
+    rows.push({
+      year,
+      kind: "champion",
+      title: "Algemeen kampioen",
+      winner_name: champ.participantName,
+      points: champ.totalPoints,
+      photo_path: null,
+      sort_order: 0,
+    });
+  }
+  let order = 1;
+  for (const cr of catResults) {
+    const top = cr.photos[0];
+    if (top && top.points > 0) {
+      rows.push({
+        year,
+        kind: "category",
+        title: cr.category.name,
+        winner_name: top.participantName,
+        points: top.points,
+        photo_path: top.photo.storage_path,
+        sort_order: order++,
+      });
+    }
+  }
+
+  await replaceHallOfFameYear(year, rows);
+  revalidatePath("/hall-of-fame");
   revalidatePath("/admin");
 }

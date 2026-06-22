@@ -5,6 +5,7 @@ import type {
   Photo,
   Settings,
   Vote,
+  HallOfFameEntry,
 } from "./types";
 
 export async function getSettings(): Promise<Settings> {
@@ -177,6 +178,30 @@ export async function getVotesByVoter(voterId: string): Promise<Vote[]> {
     .eq("voter_id", voterId);
   if (error) throw error;
   return (data ?? []) as Vote[];
+}
+
+export async function getHallOfFame(): Promise<HallOfFameEntry[]> {
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb
+    .from("hall_of_fame")
+    .select("*")
+    .order("year", { ascending: false })
+    .order("sort_order");
+  if (error) throw error;
+  return (data ?? []) as HallOfFameEntry[];
+}
+
+/** Vervangt alle erelijst-rijen van één jaar (zodat opnieuw archiveren bijwerkt). */
+export async function replaceHallOfFameYear(
+  year: number,
+  rows: Omit<HallOfFameEntry, "id">[]
+): Promise<void> {
+  const sb = getSupabaseAdmin();
+  const { error: delErr } = await sb.from("hall_of_fame").delete().eq("year", year);
+  if (delErr) throw delErr;
+  if (rows.length === 0) return;
+  const { error } = await sb.from("hall_of_fame").insert(rows);
+  if (error) throw error;
 }
 
 /** Vervang alle stemmen van een kiezer in één categorie in één transactie-achtige reeks. */

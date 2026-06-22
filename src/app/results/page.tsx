@@ -155,6 +155,15 @@ export default async function ResultsPage() {
           )}
         </div>
       ))}
+
+      <Link
+        href="/hall-of-fame"
+        className="flex items-center gap-3 rounded-[28px] bg-white/60 px-5 py-4 text-stone-600 transition hover:bg-white/80"
+      >
+        <span className="text-2xl">🏛️</span>
+        <span className="flex-1 font-semibold">Hall of Fame — winnaars door de jaren</span>
+        <span className="text-stone-300">›</span>
+      </Link>
     </div>
   );
 }
