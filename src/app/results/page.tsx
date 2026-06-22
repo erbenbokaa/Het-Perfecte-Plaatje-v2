@@ -64,6 +64,20 @@ export default async function ResultsPage() {
         <span className="text-2xl">▶</span>
       </Link>
 
+      <Link
+        href="/wrapped"
+        className="flex items-center gap-4 rounded-[28px] border border-white/70 bg-gradient-to-br from-violet-500 to-fuchsia-500 p-5 text-white shadow-[0_12px_30px_-14px_rgba(168,85,247,0.6)] transition active:scale-[0.98]"
+      >
+        <span className="text-3xl">✨</span>
+        <span className="flex-1">
+          <span className="block text-lg font-extrabold">Jouw Wrapped</span>
+          <span className="block text-sm text-white/90">
+            Je persoonlijke jaaroverzicht
+          </span>
+        </span>
+        <span className="text-2xl">›</span>
+      </Link>
+
       <div className="card">
         <h1 className="mb-4 flex items-center gap-2 text-2xl font-bold">
           <TrophyIllustration className="h-8 w-8" />
