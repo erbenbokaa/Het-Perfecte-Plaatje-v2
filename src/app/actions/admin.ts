@@ -15,7 +15,9 @@ import {
   getVotes,
   getParticipants,
   replaceHallOfFameYear,
+  deleteAllPhotos,
 } from "@/lib/db";
+import { getSupabaseAdmin, PHOTO_BUCKET } from "@/lib/supabase";
 import { computeCategoryResults, computeLeaderboard } from "@/lib/scoring";
 import type { Phase, HallOfFameEntry } from "@/lib/types";
 
@@ -84,6 +86,26 @@ export async function deleteParticipantAction(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (id && id !== me.id) await deleteParticipant(id);
   revalidatePath("/admin");
+}
+
+/** Verwijdert ALLE geüploade foto's (opslag + database). Onomkeerbaar. */
+export async function deleteAllPhotosAction() {
+  await requireAdmin();
+  const photos = await getPhotos();
+  if (photos.length > 0) {
+    const sb = getSupabaseAdmin();
+    const paths = photos.map((p) => p.storage_path);
+    // In blokken verwijderen uit de opslag (voor het geval het er veel zijn).
+    for (let i = 0; i < paths.length; i += 100) {
+      await sb.storage.from(PHOTO_BUCKET).remove(paths.slice(i, i + 100));
+    }
+    await deleteAllPhotos();
+  }
+  revalidatePath("/upload");
+  revalidatePath("/gallery");
+  revalidatePath("/dashboard");
+  revalidatePath("/admin");
+  return { ok: true, count: photos.length };
 }
 
 /** Archiveert de huidige uitslag (kampioen + categoriewinnaars) in de Hall of Fame. */

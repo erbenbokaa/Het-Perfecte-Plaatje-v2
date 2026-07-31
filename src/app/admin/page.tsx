@@ -16,6 +16,7 @@ import {
   deleteParticipantAction,
   archiveToHallOfFameAction,
 } from "@/app/actions/admin";
+import DeleteAllPhotosButton from "@/components/DeleteAllPhotosButton";
 
 export const dynamic = "force-dynamic";
 
@@ -203,6 +204,17 @@ export default async function AdminPage() {
           Let op: verwijder de foto's daarna niet uit Supabase Storage, anders
           verdwijnen de plaatjes in de erelijst.
         </p>
+      </div>
+
+      {/* Gevarenzone */}
+      <div className="card border border-red-200">
+        <h2 className="font-semibold text-red-700 mb-1">Gevarenzone</h2>
+        <p className="text-sm text-stone-600 mb-3">
+          Verwijder alle geüploade foto's om schoon te beginnen (bijvoorbeeld na
+          het testen of voor een nieuw jaar). De bijbehorende stemmen worden ook
+          verwijderd. Dit kan niet ongedaan worden gemaakt.
+        </p>
+        <DeleteAllPhotosButton />
       </div>
     </div>
   );

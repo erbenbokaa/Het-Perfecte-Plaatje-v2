@@ -163,6 +163,16 @@ export async function deletePhoto(id: string, participantId: string) {
   if (error) throw error;
 }
 
+/** Verwijdert alle fotorijen (stemmen vervallen via cascade). */
+export async function deleteAllPhotos(): Promise<void> {
+  const sb = getSupabaseAdmin();
+  const { error } = await sb
+    .from("photos")
+    .delete()
+    .neq("id", "00000000-0000-0000-0000-000000000000");
+  if (error) throw error;
+}
+
 export async function getVotes(): Promise<Vote[]> {
   const sb = getSupabaseAdmin();
   const { data, error } = await sb.from("votes").select("*");
