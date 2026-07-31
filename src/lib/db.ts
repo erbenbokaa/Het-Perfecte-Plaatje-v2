@@ -75,6 +75,18 @@ export async function deleteParticipant(id: string): Promise<void> {
   if (error) throw error;
 }
 
+export async function updateParticipantCode(
+  id: string,
+  codeHash: string
+): Promise<void> {
+  const sb = getSupabaseAdmin();
+  const { error } = await sb
+    .from("participants")
+    .update({ code_hash: codeHash })
+    .eq("id", id);
+  if (error) throw error;
+}
+
 export async function getCategories(): Promise<Category[]> {
   const sb = getSupabaseAdmin();
   const { data, error } = await sb

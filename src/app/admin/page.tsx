@@ -17,6 +17,7 @@ import {
   archiveToHallOfFameAction,
 } from "@/app/actions/admin";
 import DeleteAllPhotosButton from "@/components/DeleteAllPhotosButton";
+import ResetCodeButton from "@/components/ResetCodeButton";
 
 export const dynamic = "force-dynamic";
 
@@ -153,10 +154,13 @@ export default async function AdminPage() {
                 {p.is_admin && <span className="ml-2 text-xs text-sunset">beheerder</span>}
                 <span className="ml-2 text-xs text-stone-500">{photoCount(p.id)} foto's</span>
               </span>
-              <form action={deleteParticipantAction}>
-                <input type="hidden" name="id" value={p.id} />
-                <button className="text-red-600 text-sm hover:underline">verwijderen</button>
-              </form>
+              <div className="flex items-center gap-3">
+                <ResetCodeButton id={p.id} name={p.name} />
+                <form action={deleteParticipantAction}>
+                  <input type="hidden" name="id" value={p.id} />
+                  <button className="text-red-600 text-sm hover:underline">verwijderen</button>
+                </form>
+              </div>
             </li>
           ))}
         </ul>

@@ -16,6 +16,7 @@ import {
   getParticipants,
   replaceHallOfFameYear,
   deleteAllPhotos,
+  updateParticipantCode,
 } from "@/lib/db";
 import { getSupabaseAdmin, PHOTO_BUCKET } from "@/lib/supabase";
 import { computeCategoryResults, computeLeaderboard } from "@/lib/scoring";
@@ -86,6 +87,22 @@ export async function deleteParticipantAction(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (id && id !== me.id) await deleteParticipant(id);
   revalidatePath("/admin");
+}
+
+/** Stelt een nieuwe code in voor een deelnemer (zonder foto's te verliezen). */
+export async function resetParticipantCodeAction(
+  participantId: string,
+  newCode: string
+) {
+  await requireAdmin();
+  if (!participantId) return { ok: false, error: "Onbekende deelnemer." };
+  if (newCode.length < 4) {
+    return { ok: false, error: "Code moet minimaal 4 tekens zijn." };
+  }
+  const codeHash = await bcrypt.hash(newCode, 10);
+  await updateParticipantCode(participantId, codeHash);
+  revalidatePath("/admin");
+  return { ok: true };
 }
 
 /** Verwijdert ALLE geüploade foto's (opslag + database). Onomkeerbaar. */
