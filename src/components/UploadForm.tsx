@@ -2,22 +2,31 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { uploadPhotoAction } from "@/app/actions/photos";
+import {
+  prepareUploadAction,
+  finalizePhotoAction,
+  uploadPhotoAction,
+} from "@/app/actions/photos";
 import type { Category } from "@/lib/types";
 
-const MAX_DIMENSION = 2000; // langste zijde na verkleinen
-const TARGET_QUALITY = 0.82;
+// Alleen gebruikt voor de reserve-route en voor HEIC-omzetting.
+const MAX_DIMENSION = 2400;
+const JPEG_QUALITY = 0.9;
+
+/** Formaten die niet elk apparaat kan tonen; die zetten we om naar JPEG. */
+function needsConversion(file: File) {
+  const t = file.type.toLowerCase();
+  return t.includes("heic") || t.includes("heif") || t === "";
+}
 
 /**
- * Verkleint een foto in de browser tot een handzame JPEG. Telefoonfoto's zijn
- * vaak 3-5 MB; dat is te groot om te versturen. Lukt het verkleinen niet
- * (bijvoorbeeld een formaat dat de browser niet kan tekenen), dan gebruiken we
- * het originele bestand.
+ * Zet een foto om naar JPEG (en schaalt eventueel terug). Lukt dat niet, dan
+ * geven we het originele bestand terug.
  */
-async function shrinkImage(file: File): Promise<File> {
+async function toJpeg(file: File, maxDimension: number): Promise<File> {
   try {
     const bitmap = await createImageBitmap(file);
-    const scale = Math.min(1, MAX_DIMENSION / Math.max(bitmap.width, bitmap.height));
+    const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
     const width = Math.round(bitmap.width * scale);
     const height = Math.round(bitmap.height * scale);
 
@@ -30,11 +39,9 @@ async function shrinkImage(file: File): Promise<File> {
     bitmap.close?.();
 
     const blob = await new Promise<Blob | null>((resolve) =>
-      canvas.toBlob(resolve, "image/jpeg", TARGET_QUALITY)
+      canvas.toBlob(resolve, "image/jpeg", JPEG_QUALITY)
     );
     if (!blob) return file;
-    // Alleen gebruiken als het echt kleiner is.
-    if (blob.size >= file.size) return file;
     return new File([blob], "foto.jpg", { type: "image/jpeg" });
   } catch {
     return file;
@@ -54,40 +61,73 @@ export default function UploadForm({
   const [status, setStatus] = useState("");
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
+  function succeed() {
+    setMsg({ type: "ok", text: "Foto ingeleverd! 🎉" });
+    formRef.current?.reset();
+    router.refresh();
+  }
+
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
     setMsg(null);
 
+    const form = e.currentTarget;
+
     try {
-      const data = new FormData(e.currentTarget);
-      const file = data.get("photo");
+      const data = new FormData(form);
+      const categoryId = String(data.get("category_id") ?? "");
+      let file = data.get("photo");
 
-      if (file instanceof File && file.size > 0) {
+      if (!(file instanceof File) || file.size === 0) {
+        setMsg({ type: "err", text: "Kies een foto." });
+        return;
+      }
+
+      // HEIC e.d. omzetten zodat iedereen de foto kan bekijken.
+      if (needsConversion(file)) {
         setStatus("Foto voorbereiden…");
-        const shrunk = await shrinkImage(file);
-        if (shrunk.size > 8 * 1024 * 1024) {
-          setBusy(false);
-          setStatus("");
-          setMsg({
-            type: "err",
-            text: "Deze foto is te groot om te versturen. Probeer een andere foto.",
-          });
-          return;
-        }
-        data.set("photo", shrunk, shrunk.name);
+        file = await toJpeg(file, MAX_DIMENSION);
       }
 
-      setStatus("Bezig met inleveren…");
-      const res = await uploadPhotoAction(data);
-
-      if (res?.ok) {
-        setMsg({ type: "ok", text: "Foto ingeleverd! 🎉" });
-        formRef.current?.reset();
-        router.refresh();
-      } else {
-        setMsg({ type: "err", text: res?.error ?? "Er ging iets mis." });
+      // Rechtstreeks naar de opslag: originele kwaliteit blijft behouden.
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const prep = await prepareUploadAction(categoryId, ext);
+      if (!prep.ok) {
+        setMsg({ type: "err", text: prep.error });
+        return;
       }
+
+      setStatus("Bezig met uploaden…");
+      let directOk = false;
+      try {
+        const res = await fetch(prep.signedUrl, {
+          method: "PUT",
+          headers: { "content-type": file.type || "image/jpeg" },
+          body: file,
+        });
+        directOk = res.ok;
+      } catch {
+        directOk = false;
+      }
+
+      if (directOk) {
+        setStatus("Inzending vastleggen…");
+        const done = await finalizePhotoAction(categoryId, prep.path);
+        if (done.ok) succeed();
+        else setMsg({ type: "err", text: done.error });
+        return;
+      }
+
+      // Vangnet: via de server, met een verkleinde versie.
+      setStatus("Opnieuw proberen…");
+      const smaller = await toJpeg(file, 1800);
+      const fallback = new FormData();
+      fallback.set("category_id", categoryId);
+      fallback.set("photo", smaller, smaller.name);
+      const res = await uploadPhotoAction(fallback);
+      if (res?.ok) succeed();
+      else setMsg({ type: "err", text: res?.error ?? "Uploaden mislukt." });
     } catch {
       setMsg({
         type: "err",
