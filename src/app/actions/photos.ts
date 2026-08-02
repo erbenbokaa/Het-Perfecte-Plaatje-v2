@@ -64,20 +64,25 @@ export async function uploadPhotoAction(formData: FormData) {
   // Willekeurige bestandsnaam zodat de URL de inzender niet verraadt.
   const path = `${crypto.randomUUID()}.${ext}`;
 
-  const sb = getSupabaseAdmin();
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  const { error: upErr } = await sb.storage
-    .from(PHOTO_BUCKET)
-    .upload(path, bytes, { contentType: file.type, upsert: false });
-  if (upErr) return { ok: false, error: "Uploaden mislukt: " + upErr.message };
+  try {
+    const sb = getSupabaseAdmin();
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const { error: upErr } = await sb.storage
+      .from(PHOTO_BUCKET)
+      .upload(path, bytes, { contentType: file.type, upsert: false });
+    if (upErr) return { ok: false, error: "Uploaden mislukt: " + upErr.message };
 
-  await insertPhoto({
-    participant_id: user.id,
-    category_id: categoryId,
-    day_number: dayNumber,
-    storage_path: path,
-    caption: "",
-  });
+    await insertPhoto({
+      participant_id: user.id,
+      category_id: categoryId,
+      day_number: dayNumber,
+      storage_path: path,
+      caption: "",
+    });
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : "onbekende fout";
+    return { ok: false, error: "Opslaan mislukt: " + detail };
+  }
 
   revalidatePath("/upload");
   revalidatePath("/gallery");
